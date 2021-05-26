@@ -1,4 +1,4 @@
-package main
+package learnedindex
 
 import (
 	"container/list"
@@ -29,10 +29,10 @@ func (ind *Index) Lookup(k uint32) (*Entry, bool) {
 	if e.getType() == 2 {
 		ek := e.d_.(DataType).k_
 		if ek == k {
-			return e, true
+			return e, false
 		}
 	}
-	return e, false
+	return e, true
 }
 
 func (ind *Index) Insert(k uint32, p T) bool {
@@ -50,7 +50,7 @@ func (ind *Index) Insert(k uint32, p T) bool {
 		ek := e.d_.(DataType).k_
 		if ek == k {
 			fmt.Println("Same key exists")
-			return false
+			return true
 		}
 		ep := e.d_.(DataType).v_
 
@@ -58,7 +58,7 @@ func (ind *Index) Insert(k uint32, p T) bool {
 		e.setType(3)
 		n = &Node{A: A_, b: b_}
 		e.d_ = NodeType{n}
-		
+
 		e = n.forward(k)
 		e.insert(k, p)
 		
@@ -82,7 +82,7 @@ func (ind *Index) Insert(k uint32, p T) bool {
 		chk = false
 	}
 
-	return true
+	return false
 }
 
 func (ind *Index) adjust(n *Node, pe *Entry, chk bool) {
@@ -218,18 +218,6 @@ type NodeType struct {
 	p_ *Node
 }
 
-func main() {
-	fmt.Println("test")
-	ind := InitIndex()
-	_, chk := ind.Lookup(2)
-	fmt.Println(chk)
-	ind.Insert(2, 3)
-	_, chk = ind.Lookup(2)
-	fmt.Println(chk)
-	ind.Insert(11, 3)
-	ind.Insert(12, 3)
-
-}
 
 type T interface {
 }
