@@ -1,4 +1,4 @@
-package learnedindex
+package learned_index
 
 import (
 	"container/list"
@@ -19,7 +19,7 @@ type Index struct {
 	root Node
 }
 
-func (ind *Index) Lookup(k uint32) (*Entry, bool) {
+func (ind *Index) Lookup(k uint32) (*Entry, error) {
 	node_ := &ind.root
 	e := node_.forward(k)
 	for e.getType() == 3 { // 0: Null, 2: Data, 3:Node
@@ -29,13 +29,13 @@ func (ind *Index) Lookup(k uint32) (*Entry, bool) {
 	if e.getType() == 2 {
 		ek := e.d_.(DataType).k_
 		if ek == k {
-			return e, false
+			return e, nil
 		}
 	}
-	return e, true
+	return e, fmt.Errorf("%s", "There is no key")
 }
 
-func (ind *Index) Insert(k uint32, p T) bool {
+func (ind *Index) Insert(k uint32, p T) error {
 	path := list.New()
 	n := &ind.root
 	path.PushBack(n)
@@ -49,8 +49,7 @@ func (ind *Index) Insert(k uint32, p T) bool {
 	if e.getType() == 2 {
 		ek := e.d_.(DataType).k_
 		if ek == k {
-			fmt.Println("Same key exists")
-			return true
+			return fmt.Errorf("%s", "Same key exists")
 		}
 		ep := e.d_.(DataType).v_
 
@@ -61,16 +60,16 @@ func (ind *Index) Insert(k uint32, p T) bool {
 
 		e = n.forward(k)
 		e.insert(k, p)
-		
+
 		e = n.forward(ek)
 		e.insert(ek, ep)
-		
+
 		n.element_num = 2
 		chk = true
 	} else {
 		e.insert(k, p)
-		
-	} 
+
+	}
 
 	for p := path.Back(); p != nil; p = p.Prev() {
 		if p.Prev() != nil {
@@ -82,7 +81,7 @@ func (ind *Index) Insert(k uint32, p T) bool {
 		chk = false
 	}
 
-	return false
+	return nil
 }
 
 func (ind *Index) adjust(n *Node, pe *Entry, chk bool) {
@@ -90,21 +89,18 @@ func (ind *Index) adjust(n *Node, pe *Entry, chk bool) {
 	if chk {
 		n.conflict_num += 1
 	}
-	fmt.Println(n.element_num)
-	fmt.Println(n.conflict_num)
 	if n.element_num >= beta*n.build_num &&
 		float32(n.conflict_num)/float32(n.element_num-n.build_num) >= alpha {
-		ks := make([]uint32, n.element_num, n.element_num)
+		ks := make([]uint32, n.element_num)
 		i := 0
 		n.getKeys(ks, &i)
-		
+
 		if i != int(n.element_num) {
 			fmt.Println("Error")
 		}
 		pe.d_ = buildPartialTree(ks)
 	}
 }
-
 
 func buildPartialTree(ks []uint32) *Node {
 	L := entry_size
@@ -134,9 +130,6 @@ func trainNode(ks []uint32, L uint32) (float32, float32) {
 	i := 0
 	T := 1
 	N := len(ks)
-	fmt.Println(N - 1 - T)
-	fmt.Println(T)
-	fmt.Println(N)
 	Ut := float32(ks[N-1-T]-ks[T]) / float32(L-2)
 	for i <= N-1-T {
 		for i+T < N && float32(ks[i+T]-ks[i]) >= Ut {
@@ -175,7 +168,6 @@ func (n *Node) getKeys(ks []uint32, idx *int) {
 		}
 	}
 }
-
 
 func (n *Node) forward(k uint32) *Entry {
 	idx := int(n.A*float32(k) + n.b)
@@ -217,7 +209,6 @@ type DataType struct {
 type NodeType struct {
 	p_ *Node
 }
-
 
 type T interface {
 }
